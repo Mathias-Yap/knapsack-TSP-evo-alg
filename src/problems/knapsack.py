@@ -1,15 +1,6 @@
-import pandas as pd
+from .abstract_problem import problem
 import numpy as np
-from abc import ABC, abstractmethod
-
-class problem(ABC):
-    
-    @abstractmethod
-    def get_fitness(self, genotype:list) -> float:
-        pass
-    
-    
-    
+import pandas as pd
 class knapsack(problem):
     
     def __init__(self,knapsack_size: int = 10, minimum_item_weight: float = 0, maximum_item_weight: float = 10, maximum_total_weight: float = 20, item_count: int = 5, copy: bool = False):

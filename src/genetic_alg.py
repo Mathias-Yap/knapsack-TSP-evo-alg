@@ -1,38 +1,11 @@
 import numpy as np
-from abc import ABC, abstractmethod
-from problem import problem, knapsack
-
-
-class individual(ABC):
-    @abstractmethod
-    def __init__(self,genome_size: int) -> None:
-        pass
-    @abstractmethod
-    def get_genome(self) -> list:
-        pass
-    @abstractmethod
-    def set_fitness(self) -> None:
-        pass
-    @abstractmethod
-    def get_fitness(self) -> float:
-        pass
-    
-class bitstring_individual(individual):
-    def __init__(self, genome_size: int) -> None:
-        self.genome = np.random.randint(2,size = genome_size)
-        self.fitness = 0
-    def get_genome(self) -> list:
-        return self.genome
-    def set_fitness(self,fitness: float) -> None:
-        self.fitness = fitness
-    def get_fitness(self) -> float:
-        return self.fitness
-
+from problems import *
+from individuals import *
 class genetic_alg:
     """Genetic algorithm class
     """
     
-    def __init__(self,pop_size : int, genome_size: int,crossover_type: str, mutation_method: str,problem: problem):
+    def __init__(self,pop_size : int, genome_size: int,crossover_type: str, mutation_method: str,problem: problem,genome_type = "bitstring"):
         """Constructor for the genetic algorithm. Give it parameters and a problem to solve
 
         Args:
@@ -44,11 +17,13 @@ class genetic_alg:
         """
         self.pop_size = pop_size
         self.genome_size = genome_size
+        self.genome_type = genome_type
         self.crossover_type = crossover_type
         self.mutation_method = mutation_method
         self.problem = problem
         self.population = self.create_population(pop_size)
         self.set_population_fitness(self.population)
+    
     
     def get_population(self) -> list:
         """
@@ -72,7 +47,7 @@ class genetic_alg:
         return population
     
     
-    def set_population_fitness(self,population):
+    def calculate_population_fitness(self,population):
         """Calculates the fitness of each individual in a population.
 
         Args:
@@ -82,7 +57,7 @@ class genetic_alg:
             fitness = self.problem.get_fitness(genotype = individual.get_genome())
             individual.set_fitness(fitness)
         
-    def tournament_selection(self,tournament_size: int, p: float = 1) -> list[individual, individual]:
+    def tournament_selection(self,select_from: list, tournament_size: int, p: float = 1) -> list[individual, individual]:
         """Performs tournament selection: create a tournament by uniformly selecting individuals from the population without replacement.
         Then, select the most fit individual with probability p, the next most fit with probability p*(1-p)^1, the individual after that with probability p*(1-p)^2 etc.
         Args:
@@ -92,7 +67,7 @@ class genetic_alg:
         Returns:
             list[individual, individual]: The two individuals that resulted from the tournament selection
         """
-        tournament = np.random.choice(self.population,size = tournament_size,replace = False)
+        tournament = np.random.choice(select_from,size = tournament_size,replace = False)
         sorted_tournament = sorted(tournament,key = lambda obj: obj.get_fitness(),reverse = True)
         probabilities = [0]*tournament_size
         if p == 1:
@@ -108,8 +83,8 @@ class genetic_alg:
         winners = np.random.choice(self.population,size = 2,replace = False)
         return winners
     
-    def uniform_crossover(self,parent_1: individual, parent_2: individual,ratio: float = 0.5) -> individual: 
-        """performs uniform crossover to create the genome for a new individual.
+    def next_generation(self,parent_1: individual, parent_2: individual,ratio: float = 0.5) -> individual: 
+        """Create the next generation of the population from 
 
         Args:
             parent_1 (individual): The first parent of the new individual
@@ -119,18 +94,35 @@ class genetic_alg:
         Returns:
             individual: a new individual from the combined genomes
         """
+        self.calculate_population_fitness()
+        children = []
+        while len(children) < self.pop_size:
+            parents = self.tournament_selection()
+            new_child = parents[0].create_child_with(parents[1])
+            children.append[new_child]
+        self.population = children
+        self.mutate_population
         
+        return child
+    
+    def mutate_population(self,mutation_probability:float):
+        for individual in self.population:
+            individual.mutate(mutation_probability,self.mutation_method)
 
-
-
+    
         
 if __name__ == "__main__":
     knapsack = knapsack()
-    alg = genetic_alg(20,5,"bit flip", "mutation method",knapsack)
-    for individual in alg.get_population():
-        print(individual.get_fitness())
-    sorted_tournament = alg.tournament_selection(20,1)
-    print("first individual: ",sorted_tournament[0].get_fitness())
+    alg = genetic_alg(20,5,"bitflip", "mutation method",knapsack)
+
+    pop = alg.tournament_selection(select_from = alg.get_population(), tournament_size=4)
+    print(pop[0].get_genome())
+    
+    alg.mutate_population(mutation_probability=.1)
+    mutated_pop = alg.get_population()
+    
+    
+    print(mutated_pop[0].get_genome())
     # for index, individual in enumerate(sorted_tournament):
     #     print("fitness {index}: ".format(index=  index), individual.get_fitness())
     
