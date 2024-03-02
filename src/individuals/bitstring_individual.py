@@ -86,7 +86,7 @@ class bitstring_individual(individual):
                 children.append(bitstring_individual(genome = new_gene_2))
                 
         elif crossover_method == "one point":
-            
+            #perform one point crossover
             crossover_point = np.random.randint(0,len(self.genome))
             
             new_gene_1[crossover_point:] = self.genome[crossover_point:]
@@ -95,6 +95,7 @@ class bitstring_individual(individual):
             new_gene_2[:crossover_point] = self.genome[:crossover_point]
         
         elif crossover_method == "two point":
+            #perform two point crossover
             approved = False
             crossover_1 = np.random.randint(0,len(self.genome))
             while not approved:
