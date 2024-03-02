@@ -17,7 +17,7 @@ class bitstring_individual(individual):
         if len(genome)>0:
             self.genome = genome
         else:
-            self.genome = np.random.randint(2,size = genome_size)
+            self.genome = list(np.random.randint(2,size = genome_size))
             
         self.fitness = 0
 
@@ -55,7 +55,6 @@ class bitstring_individual(individual):
                     self.genome[index] = 1
                 else:
                     self.genome[index] = 0
-        
     
     def create_child_with(self, other_parent: individual,ratio: float = 0.5,crossover_method: str = "uniform") -> individual: 
         """performs uniform crossover to create the genome for a new individual.
@@ -68,19 +67,52 @@ class bitstring_individual(individual):
         Returns:
             individual: a new individual from the combined genomes
         """
+        children = []
+        new_gene_1 = [0]*len(self.get_genome())
+        new_gene_2 = [0]*len(self.get_genome())
+        
         if crossover_method == "uniform":
             # perform uniform crossover to generate the child.
-            new_gene = [0]*len(self.get_genome())
-            for index, gene in enumerate(new_gene):
-                if np.random.random() < ratio:
-                    new_gene[index] = self.get_genome()[index]
-                else:
-                    new_gene[index] = other_parent.get_genome()[index]
-                    
             
-                child = bitstring_individual(genome = new_gene)
+            for index, gene in enumerate(new_gene_1):
+                if np.random.random() < ratio:
+                    new_gene_1[index] = self.get_genome()[index]
+                    new_gene_2[index] = other_parent.get_genome()[index]
+                else:
+                    new_gene_1[index] = other_parent.get_genome()[index]
+                    new_gene_2[index] = self.get_genome()[index]
                 
-        return child
+                children.append(bitstring_individual(genome = new_gene_1))
+                children.append(bitstring_individual(genome = new_gene_2))
+                
+        elif crossover_method == "one point":
+            
+            crossover_point = np.random.randint(0,len(self.genome))
+            
+            new_gene_1[crossover_point:] = self.genome[crossover_point:]
+            new_gene_1[:crossover_point] = other_parent.get_genome()[:crossover_point]
+            new_gene_2[crossover_point:] = other_parent.get_genome()[crossover_point:]
+            new_gene_2[:crossover_point] = self.genome[:crossover_point]
+        
+        elif crossover_method == "two point":
+            approved = False
+            crossover_1 = np.random.randint(0,len(self.genome))
+            while not approved:
+                crossover_2 = np.random.randint(0,len(self.genome))
+                if not crossover_2 == crossover_1:
+                    approved = True
+            min_crossover = min(crossover_1,crossover_2)
+            max_crossover = max(crossover_1,crossover_2)
+            
+            new_gene_1[:min_crossover] = self.genome[:min_crossover]
+            new_gene_2[:min_crossover] = other_parent.get_genome()[:min_crossover]
+            new_gene_1[min_crossover:max_crossover] = other_parent.get_genome()[min_crossover:max_crossover]
+            new_gene_2[min_crossover:max_crossover] = self.genome[min_crossover:max_crossover]
+            new_gene_1[max_crossover:] = self.genome[max_crossover:]
+            new_gene_2[max_crossover:] = other_parent.genome()[max_crossover:]
+            
+           
+        return children
         
 
     
