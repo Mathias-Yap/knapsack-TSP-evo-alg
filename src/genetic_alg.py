@@ -156,8 +156,9 @@ class genetic_alg:
         children = []
         while len(children) < self.pop_size:
             parents = self.tournament_selection(tournament_size=5,p = 1, select_from=self.population)
-            new_child = parents[0].create_child_with(parents[1])
-            children.append(new_child)
+            new_children = parents[0].create_child_with(parents[1])
+            children.append(new_children[0])
+            children.append(new_children[1])
         self.population = children
         self.current_gen = self.current_gen +1
         return self.population
@@ -185,18 +186,18 @@ class genetic_alg:
     
         
 if __name__ == "__main__":
-    knapsack = knapsack(knapsack_size= 40,minimum_item_weight=0.1,maximum_item_weight=10,maximum_total_weight=15,item_count = 8)
+    knapsack = knapsack(minimum_item_weight=0.1,maximum_item_weight=10,maximum_total_weight=15,item_count = 8)
     alg = genetic_alg(50,8, mutation_method="bitflip",mutation_probability=0.1,crossover_type="uniform",problem = knapsack)
 
-    # pop = alg.tournament_selection(select_from = alg.get_population(), tournament_size=4)
-    # for i in range(20):
-    #     alg.update_history()
-    #     fittest = alg.get_fittest()
-    #     print(fittest.get_genome(),fittest.get_fitness())
-    #     current_pop = alg.make_next_generation()
-    #     alg.mutate_population(mutation_probability=0.1,mutation_method="bitflip")
+    pop = alg.tournament_selection(select_from = alg.get_population(), tournament_size=4)
+    for i in range(20):
+        alg.update_history()
+        fittest = alg.get_fittest()
+        print(fittest.get_genome(),fittest.get_fitness())
+        current_pop = alg.make_next_generation()
+        alg.mutate_population(mutation_probability=0.1,mutation_method="bitflip")
   
-    alg.roulette_selection(gibbs_temperature = 1)
+    # alg.roulette_selection(gibbs_temperature = 1)
     
     # print(alg.history_df.head())
     

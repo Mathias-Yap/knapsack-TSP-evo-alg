@@ -31,15 +31,15 @@ class knapsack(problem):
         Returns:
             gene_value (float): the score that a solution has in this problem
         """
-            gene_df = self.problem_df
-            gene_df['Genotype'] = genotype
-            gene_value = (gene_df.rewards * gene_df.Genotype).sum()
-            gene_weight = (gene_df.weights * gene_df.Genotype).sum()
-             
-            if gene_weight > self.maximum_total_weight:
-                return 0
-            else:
-                return gene_value
+        gene_df = self.problem_df
+        gene_df['Genotype'] = genotype
+        gene_value = (gene_df.rewards * gene_df.Genotype).sum()
+        gene_weight = (gene_df.weights * gene_df.Genotype).sum()
+            
+        if gene_weight > self.maximum_total_weight:
+            return 0
+        else:
+            return gene_value
             
     
 # if __name__ == "__main__":
