@@ -1,4 +1,4 @@
-from .abstract_problem import problem
+from abstract_problem import problem
 import numpy as np
 import pandas as pd
 class knapsack(problem):
@@ -44,5 +44,5 @@ class knapsack(problem):
     
 # if __name__ == "__main__":
 #     problem = knapsack()
-#     print(problem.get_fitness([1,0,0,0,0]))
+#     print(problem.get_knapsack_df())
     
