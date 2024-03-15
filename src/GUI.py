@@ -1,5 +1,6 @@
 
 from tkinter import ttk
+import tkinter as tk
 from ttkthemes import ThemedTk
 class start_menu:   
     def __init__(self,root):
@@ -17,7 +18,7 @@ class start_menu:
         self.root.geometry(f"{width}x{height}+{x}+{y}")
     
     def make_popsize_slider(self):
-        popsize_frame =ThemedTk(self.root, theme = "Equilux")
+        popsize_frame =ttk.Frame(self.root)
         label = ttk.Label(popsize_frame, text="population size")
         label.pack(side = 'left')
         slider = ttk.Scale(popsize_frame,length=600, from_=0, to=200, orient="horizontal",name = "population size")
@@ -25,6 +26,6 @@ class start_menu:
         slider.pack(side = 'right')
         popsize_frame.pack(side = 'bottom')
 if __name__ == "__main__":
-    root = ThemedTk(theme="Equilux")
+    root = tk.Tk()
     start_menu(root)
     root.mainloop()
