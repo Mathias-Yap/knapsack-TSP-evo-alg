@@ -26,22 +26,21 @@ class genetic_alg:
         self.population = self.create_population(pop_size)
         self.calculate_population_fitness(self.population)
         self.current_gen = 0
-        self.history_df = pd.DataFrame(columns = ["Generation","Best fitness","Mean fitness", "Fitness variance","Best genome"])
+        self.history_list = []
     
     def get_history(self):
-        return self.history_df
+        history_df = pd.DataFrame(self.history_list)
+        return history_df
     
     def update_history(self):
         fittest = self.get_fittest()
         fitnesses = [individual.get_fitness() for individual in self.population] #create a list of all fitnesses for each individual in the population list.
-        self.history_df.loc[self.current_gen] = ([self.current_gen] #generation
-                                                 + [fittest.get_fitness()] #best fitness
-                                                 + [np.mean(fitnesses)] # mean fitness
-                                                + [np.var(fitnesses)] # fitness variance
-                                                 +  [fittest.get_genome()]) # best individual genome
-                                                 
-        
-        
+        gendict = {"Generation" : self.current_gen,
+                   "Best fitness": fittest.get_fitness(),
+                   "Mean fitness": np.mean(fitnesses),
+                   "Fitness variance": np.var(fitnesses),
+                   "Best genome": fittest.get_genome() }
+        self.history_list.append(gendict)
     
     def get_population(self) -> list:
         """
@@ -172,8 +171,8 @@ class genetic_alg:
         self.calculate_population_fitness(self.population)
         sorted_pop = sorted(self.population,key = lambda obj: obj.get_fitness(),reverse = True)
         return sorted_pop[0]
-        
-    def mutate_population(self,mutation_probability:float, mutation_method):
+    
+    def mutate_population(self,mutation_probability:float = 0.01, mutation_method = 'bitstring'):
         """Calls the mutation method for each individual in the current population. For bitstring gene representations
         this will be a bitflip operation. Mutation is implemented in subclasses of the abstract class "individual"
 
@@ -183,19 +182,26 @@ class genetic_alg:
         for individual in self.population:
             individual.mutate(mutation_probability,mutation_method) 
 
-    
+    def run(self,max_generations:int,goal_fitness:int):
+        while(self.current_gen<max_generations and self.get_fittest().get_fitness()<goal_fitness):
+            self.update_history()
+            self.make_next_generation()
+            self.mutate_population()
+        self.update_history()
         
 if __name__ == "__main__":
     knapsack = knapsack(minimum_item_weight=0.1,maximum_item_weight=10,maximum_total_weight=15,item_count = 8)
-    alg = genetic_alg(50,8, mutation_method="bitflip",mutation_probability=0.1,crossover_type="uniform",problem = knapsack)
+    alg = genetic_alg(15,8, mutation_method="bitflip",mutation_probability=0.1,crossover_type="uniform",problem = knapsack)
 
     pop = alg.tournament_selection(select_from = alg.get_population(), tournament_size=4)
-    for i in range(20):
-        alg.update_history()
-        fittest = alg.get_fittest()
-        print(fittest.get_genome(),fittest.get_fitness())
-        current_pop = alg.make_next_generation()
-        alg.mutate_population(mutation_probability=0.1,mutation_method="bitflip")
+    alg.run(30,1000)
+    print(alg.get_history())
+    # for i in range(20):
+    #     alg.update_history()
+    #     fittest = alg.get_fittest()
+    #     print(fittest.get_genome(),fittest.get_fitness())
+    #     current_pop = alg.make_next_generation()
+    #     alg.mutate_population(mutation_probability=0.1,mutation_method="bitflip")
   
     # alg.roulette_selection(gibbs_temperature = 1)
     

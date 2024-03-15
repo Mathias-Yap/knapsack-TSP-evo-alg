@@ -1,4 +1,4 @@
-from abstract_problem import problem
+from .abstract_problem import problem
 import numpy as np
 import pandas as pd
 class knapsack(problem):
