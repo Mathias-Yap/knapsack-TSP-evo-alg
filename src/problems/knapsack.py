@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 class knapsack(problem):
     
-    def __init__(self, minimum_item_weight: float = 0, maximum_item_weight: float = 10, maximum_total_weight: float = 20, item_count: int = 5, copy: bool = False):
+    def __init__(self, minimum_item_weight: float = 0, maximum_item_weight: float = 10, maximum_total_weight: float = 20, item_count: int = 5):
         """knapsack problem class
 
         Args:
@@ -13,6 +13,7 @@ class knapsack(problem):
             item_count (int, optional): The number of items that are in the problem. Defaults to 5.
             copy (bool, optional): True if items can be selected without replacement, false otherwise. Defaults to False.
         """
+        self.item_count = item_count
         self.maximum_total_weight = maximum_total_weight
         item_rewards = list(range(1,item_count+1))        	
         rng = np.random.default_rng(seed=None)
@@ -21,7 +22,8 @@ class knapsack(problem):
        
     def get_knapsack_df(self):
         return self.problem_df
-    
+    def get_item_count(self):
+        return self.item_count
     def get_fitness(self,genotype: list) ->float:
         """Calculates the fitness that a solution can have for this problem
 
