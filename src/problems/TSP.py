@@ -5,9 +5,8 @@ import pandas as pd
 class TSP(problem):
     def __init__(self,n_cities: int):
         """TSP problem with 0,0 at the center point. Cities lie on the unit circle that surrounds this center point. Cities are represented by their angle from this center point"""
-        angles = self.make_angles(n_cities)
-        print(angles)
-        self.problem_df = self.make_distance_df(angles)
+        self.angles = self.make_angles(n_cities)
+        self.problem_df = self.make_distance_df(self.angles)
     
     def make_angles(self, n_cities):
         angles = []

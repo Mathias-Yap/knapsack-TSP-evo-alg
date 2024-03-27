@@ -80,8 +80,12 @@ class genetic_alg:
             population: a list that contains all individuals in the current population
         """
         population = [None] * size
-        for i in range(0,size):
-            population[i] = bitstring_individual(genome_size=self.genome_size)
+        if self.genome_type == 'bitstring':
+            for i in range(0,size):
+                population[i] = bitstring_individual(genome_size=self.genome_size)
+        if self.genome_type == 'path':
+            for i in range(0,size):
+                population[i] = path_individual(genome_size=self.genome_size)
         return population
     
     
