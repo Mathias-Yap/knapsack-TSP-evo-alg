@@ -117,7 +117,7 @@ class bitstring_individual(individual):
                 new_gene_1[min_crossover:max_crossover] = other_parent.get_genome()[min_crossover:max_crossover]
                 new_gene_2[min_crossover:max_crossover] = self.genome[min_crossover:max_crossover]
                 new_gene_1[max_crossover:] = self.genome[max_crossover:]
-                new_gene_2[max_crossover:] = other_parent.genome()[max_crossover:]
+                new_gene_2[max_crossover:] = other_parent.get_genome()[max_crossover:]
            
             
         children.append(bitstring_individual(genome = new_gene_1))

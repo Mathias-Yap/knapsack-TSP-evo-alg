@@ -14,7 +14,7 @@ class genetic_alg:
                 mutation_probability: float, 
                 problem: problem,
                 genome_type = "bitstring",
-                selection_method = "tournament"):
+                selection_method = "tournament", tournament_frac = 0.2, tournament_prob = 1,roulette_param: int = 0):
         
         """Constructor for the genetic algorithm. Give it parameters and a problem to solve
 
@@ -31,16 +31,28 @@ class genetic_alg:
         self.genome_type = genome_type
         self.crossover_type = crossover_type
         self.mutation_method = mutation_method
+        self.mutation_probability = mutation_probability
         self.problem = problem
+        self.tournament_prob = tournament_prob
+        self.tournament_frac = tournament_frac
         self.population = self.create_population(pop_size)
         self.calculate_population_fitness(self.population)
         self.current_gen = 0
         self.history_list = []
-    
+        self.roulette_param = roulette_param
+        
+    def reset_alg(self):
+        """resets the alg to generation 0 with a new population and a blank history
+        """
+        self.population = self.create_population(self.pop_size)
+        self.calculate_population_fitness(self.population)
+        self.current_gen = 0
+        self.history_list = []
+        
     def get_history(self):
         history_df = pd.DataFrame(self.history_list)
         return history_df
-    
+  
     def update_history(self):
         fittest = self.get_fittest()
         fitnesses = [individual.get_fitness() for individual in self.population] #create a list of all fitnesses for each individual in the population list.
@@ -102,21 +114,34 @@ class genetic_alg:
             _type_: a list with the two parents
         """
         fitnesses = self.calculate_population_fitness()
-        if gibbs_temperature > 0:
+        selection = []
+        if sum(fitnesses)==0:
+            selection = np.random.choice(self.population,size = len(self.population),replace = True)
+            
+        elif gibbs_temperature > 0:
             probabilities = [math.exp(fitness/gibbs_temperature) for fitness in fitnesses]
             probabilities = [prob/sum(probabilities) for prob in probabilities]
-        else:
-            probabilities = fitnesses/sum(fitnesses)
+            for p in range(len(self.population)):
+                probability_sum = 0
+                randfloat = np.random.rand()
+                for index, probability in enumerate(probabilities):
+                    probability_sum = probability_sum+probability
+                    if randfloat<probability_sum:
+                        selection.append(self.population[index])
+                        break
+                    
         
-        selection = []
-        for p in range(len(self.population)):
-            probability_sum = 0
-            randfloat = np.random.rand()
-            for index, probability in enumerate(probabilities):
-                probability_sum = probability_sum+probability
-                if randfloat<probability_sum:
-                    selection.append(self.population[index])
-                    break
+        else:
+            probabilities = [fitness/sum(fitnesses) for fitness in fitnesses]
+
+            for p in range(len(self.population)):
+                probability_sum = 0
+                randfloat = np.random.rand()
+                for index, probability in enumerate(probabilities):
+                    probability_sum = probability_sum+probability
+                    if randfloat<probability_sum:
+                        selection.append(self.population[index])
+                        break
         return selection       
         # for parent_index, parent in enumerate(probabilities):
         #     probability_sum = 0
@@ -128,14 +153,7 @@ class genetic_alg:
         #            # print("parent: ",parents[parent_index].get_genome(),"\n", "probability sum", probability_sum, "roulette roll: ", randfloat)
         #             break
         
-    def elitist_recombination(self):
-        """performs elitist recombination selection: take two random individuals, perform crossover and then select the two that are most fit to be in the population.
-        WARNING: do not perform selection or crossover separate from elitist recombination. This method does both at once.
-        """
-        parent1,parent2 = np.random.choice(self.population,2,replace = False)
-       
-        child1,child2 = parent1.create_child_with(parent2,crossover_method = self.crossover_type)
-        
+
     def tournament_selection(self,select_from: list, tournament_size: int, p: float = 0.8) -> list[individual, individual]:
         """Performs tournament selection: create a tournament by uniformly selecting individuals from the population without replacement.
         Then, select the most fit individual with probability p, the next most fit with probability p*(1-p)^1, the individual after that with probability p*(1-p)^2 etc.
@@ -179,14 +197,14 @@ class genetic_alg:
         match self.selection_method: 
             case "tournament":
                 while len(children) < self.pop_size:
-                    
-                        parents = self.tournament_selection(tournament_size=5,p = 1, select_from=self.population)       
+                        tournament_size = int(self.pop_size*self.tournament_frac)
+                        parents = self.tournament_selection(tournament_size=tournament_size,p = self.tournament_prob, select_from=self.population)       
                         new_children = parents[0].create_child_with(parents[1],crossover_method=self.crossover_type)
                         children.append(new_children[0])
                         children.append(new_children[1])
                         
             case "roulette":
-                parents = self.roulette_selection()
+                parents = self.roulette_selection(gibbs_temperature=self.roulette_param)
                 for i in range(0, len(parents), 2):
                     new_children = parents[i].create_child_with(parents[i+1],crossover_method=self.crossover_type)
                     children.append(new_children[0])
@@ -206,7 +224,7 @@ class genetic_alg:
         sorted_pop = sorted(self.population,key = lambda obj: obj.get_fitness(),reverse = True)
         return sorted_pop[0]
     
-    def mutate_population(self,mutation_probability:float = 0.01, mutation_method = 'bitstring'):
+    def mutate_population(self, mutation_method = 'bitstring'):
         """Calls the mutation method for each individual in the current population. For bitstring gene representations
         this will be a bitflip operation. Mutation is implemented in subclasses of the abstract class "individual"
 
@@ -214,7 +232,7 @@ class genetic_alg:
             mutation_probability (float): The probability for each gene in the genome to mutate. This value should be between 0 and 1
         """
         for individual in self.population:
-            individual.mutate(mutation_probability,mutation_method) 
+            individual.mutate(self.mutation_probability,mutation_method) 
 
     def run(self,max_generations:int):
         while(self.current_gen<max_generations):
@@ -223,17 +241,50 @@ class genetic_alg:
             self.update_history()
         
 if __name__ == "__main__":
-    problem = knapsack(1,10,30,10)    
-    alg = genetic_alg(
-    pop_size=50,
-    genome_size=10,
-    crossover_type="one point", 
-    mutation_method="gene bitflip", 
-    mutation_probability=0.1,
-    problem=problem,
-    genome_type='bitstring',
-    selection_method="roulette")
-    alg.run(50)
-    print(alg.get_history())
+    def generate_problems(per_class = 2):
+        problems = []
+        max_total_weights = [10, 20, 30]
+        item_counts = [5, 10, 20]
+        test_cases = []
+        for iteration in range(per_class):
+            for total_weight in max_total_weights:
+                for count in item_counts:
+                
+                    test_case = {
+                        'maximum_total_weight': total_weight,
+                        'item_count': count
+                    }
+                    test_cases.append(test_case)
+                
+        for case in test_cases:
+            problems.append(knapsack(minimum_item_weight=0,maximum_item_weight=10, **case))
+        return problems
+    problems = generate_problems()
+    print(len(problems))
+    
+    algs = []
+    
+    pop_sizes = [6, 10, 20]
+    crossover_types = ["one point", "uniform", "two point"]
+    mutation_probabilities = [0.05, 0.1, 0.2]
+    selection_methods = ["roulette", "tournament"]
+    for problem in problems:
+        for pop_size in pop_sizes:
+            for crossover_type in crossover_types:
+                for mutation_probability in mutation_probabilities:
+                    for selection_method in selection_methods:
+                        alg = genetic_alg(
+                            pop_size=pop_size,
+                            genome_size=problem.get_item_count(),
+                            crossover_type=crossover_type, 
+                            mutation_method="gene bitflip", 
+                            mutation_probability=mutation_probability,
+                            problem=problem,
+                            genome_type='bitstring',
+                            selection_method=selection_method)
+                        algs.append(alg)
+                        
+    for alg in algs:
+        alg.run(50)
     
     
